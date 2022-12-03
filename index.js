@@ -1,18 +1,23 @@
+'use strict';
 const express = require('express');
-const app = express();
 const path = require('path');
-const cors = require('cors');
-app.use(cors());
-app.use(express.json())
-app.use('/public', express.static(path.join(__dirname, 'public')))
+const serverless = require('serverless-http');
+const app = express();
 
-app.get('/', (req, res) => {
-	console.log('req = ', req)
-	res.status(200).send('I exist -- get')
-})
-app.post('/login', (req, res) => {
-	console.log('req = ', req)
-	res.status(200).send('I exist -- login post')
-})
+const router = express.Router();
+router.get('/', (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.write('<h1>Hello from Express.js!</h1>');
+  res.end();
+});
+router.get('/another', (req, res) => res.json({ route: req.originalUrl }));
+router.post('/', (req, res) => res.json({ postBody: req.body }));
 
-app.listen(3000, () => console.log('listening'))
+app.use(express.json());
+app.use('/.netlify/functions/server', router);  // path must route to lambda
+app.use('/', (req, res) => res.sendFile(path.join(__dirname, './public/index.html')));
+
+module.exports = app;
+module.exports.handler = serverless(app);
+
+app.listen(3000, () => console.log('listening 2'))
